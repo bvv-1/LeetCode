@@ -1,0 +1,59 @@
+# Step1
+
+- O(nk^2)のDPで解こうとしたが、制約的に許されなかった。解説を見ると、k色のペンキは対称なので、全探索的なことをする必要はなかった。
+- dp[i]をi個目のポストの塗り方のパターン数とすると、dp[i] = i-1個目のポストと同じ色で塗るパターン数 + 異なる色で塗るパターン数で計算できる。
+  - 異なる色で塗るパターン数は、2連続になるパターンを引いて、dp[i - 1] * k - dp[i - 1] = dp[i - 1] * (k - 1)
+  - 同じ色で塗るパターン数は、3連続になるパターンを引いて、dp[i - 2] * k - dp[i - 2] = dp[i - 2] * (k - 1)
+
+```python
+class Solution:
+    def num_ways(self, n: int, k: int) -> int:
+        if n == 1:
+            return k
+        if n == 2:
+            return k * k
+        dp = [0] * n
+        dp[0] = k
+        dp[1] = k * k
+        for i in range(2, n):
+            dp[i] += (dp[i - 1] + dp[i - 2]) * (k - 1)
+        return dp[-1]
+```
+
+- https://discord.com/channels/1084280443945353267/1200089668901937312/1205822847457562625 メモ化再帰で解けるらしい
+- 制約は明示されていないものの、`k=1, n>10**7`のコーナーケースが含まれていたので、対策として2行追加したら通った。
+
+```python
+from functools import cache
+
+class Solution:
+    @cache
+    def num_ways(self, n: int, k: int) -> int:
+        if n == 1:
+            return k
+        if n == 2:
+            return k * k
+        if k == 1 and n > 2: # for killer case
+            return 0
+        return (self.num_ways(n - 1, k) + self.num_ways(n - 2, k)) * (k - 1)
+```
+
+# step2, step3
+
+- 計算結果はi-2, i-1, iだけ持っておけばいいので、これで空間計算量をO(1)に減らした。
+
+```python
+class Solution:
+    def num_ways(self, n: int, k: int) -> int:
+        if n == 1:
+            return k
+        if n == 2:
+            return k * k
+        dp = [k, k * k, 0]
+        for _ in range(2, n):
+            dp[2] += (dp[0] + dp[1]) * (k - 1)
+            dp[0] = dp[1]
+            dp[1] = dp[2]
+            dp[2] = 0
+        return dp[1]
+```
